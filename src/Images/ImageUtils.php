@@ -100,18 +100,25 @@ class ImageUtils {
 
         $requests = function($urls) use ($guzzle, &$results) {
             foreach ($urls as $key => $url) {
-                $file = tempnam(sys_get_temp_dir(), 'goose');
 
-                $results[] = (object)[
-                    'url' => $url,
-                    'file' => $file,
-                ];
+                $urlInfos = parse_url($url);
 
-                yield $key => function($options) use ($guzzle, $url, $file) {
-                    $options['sink'] = $file;
+                if ( !empty($urlInfos['path']) && preg_match('#[A-Za-z0-9]+#', $urlInfos['path']) ) {
 
-                    return $guzzle->sendAsync(new Request('GET', $url), $options);
-                };
+                    $file = tempnam(sys_get_temp_dir(), 'goose');
+
+                    $results[] = (object)[
+                        'url' => $url,
+                        'file' => $file,
+                    ];
+
+                    yield $key => function($options) use ($guzzle, $url, $file) {
+                        $options['sink'] = $file;
+
+                        return $guzzle->sendAsync(new Request('GET', $url), $options);
+                    };
+
+                }
             }
         };
 
